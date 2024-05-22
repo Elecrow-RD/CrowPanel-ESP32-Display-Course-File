@@ -14,14 +14,17 @@ Description	 :	The code is currently available based on the course on YouTube,
 
 #include <Wire.h>
 #include <SPI.h>
+#include <ESP32Servo.h>
+Servo myservo;
 
 /**************************LVGL and UI************************
 if you want to use the LVGL demo. you need to include <demos/lv_demos.h> and <examples/lv_examples.h>. 
 if not, please do not include it. It will waste your Flash space.
 **************************************************************/
 #include <lvgl.h>
-#include <demos/lv_demos.h>
-#include <examples/lv_examples.h>
+#include "ui.h"
+// #include <demos/lv_demos.h>
+// #include <examples/lv_examples.h>
 /**************************LVGL and UI END************************/
 
 /*******************************************************************************
@@ -129,7 +132,9 @@ void setup()
 
   tft.fillScreen(TFT_BLACK);
 
-  lv_demo_widgets();    // LVGL demo
+  // lv_demo_widgets();    // LVGL demo
+  ui_init();
+  myservo.attach(38);
   
   Serial.println( "Setup done" );
 
@@ -137,6 +142,16 @@ void setup()
 
 void loop()
 {
+    char buf[16];
     lv_timer_handler();
     delay(5);
+    if(angle_changed)
+    {
+      myservo.write(lv_slider_get_value(ui_Slider1));
+      angle_changed = 0;
+      lv_snprintf(buf, sizeof(buf), "Angle:%d", (int)lv_slider_get_value(ui_Slider1));
+      lv_label_set_text(ui_Label2, buf);
+      lv_snprintf(buf, sizeof(buf), "Angle:%d", (int)lv_arc_get_value(ui_Arc1));
+      lv_label_set_text(ui_Label1, buf);
+    }
 }

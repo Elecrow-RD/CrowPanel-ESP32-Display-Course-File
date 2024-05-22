@@ -20,8 +20,9 @@ if you want to use the LVGL demo. you need to include <demos/lv_demos.h> and <ex
 if not, please do not include it. It will waste your Flash space.
 **************************************************************/
 #include <lvgl.h>
-#include <demos/lv_demos.h>
-#include <examples/lv_examples.h>
+#include "ui.h"
+// #include <demos/lv_demos.h>
+// #include <examples/lv_examples.h>
 /**************************LVGL and UI END************************/
 
 /*******************************************************************************
@@ -129,7 +130,9 @@ void setup()
 
   tft.fillScreen(TFT_BLACK);
 
-  lv_demo_widgets();    // LVGL demo
+  //please do not use LVGL Demo and UI export from Squareline Studio in the same time.
+  // lv_demo_widgets();    // LVGL demo
+  ui_init();               // UI function that comes from ui.c
   
   Serial.println( "Setup done" );
 

@@ -7,7 +7,7 @@ Lesson	link :	https://www.youtube.com/watch?v=WHfPH-Kr9XU
 Description	 :	The code is currently available based on the course on YouTube, 
 				if you have any questions, please refer to the course video: Introduction 
 				to ask questions or feedback.
-******************************************************************************************/
+**************************************************************/
 
 
 
@@ -25,8 +25,9 @@ if you want to use the LVGL demo. you need to include <demos/lv_demos.h> and <ex
 if not, please do not include it. It will waste your Flash space.
 **************************************************************/
 #include <lvgl.h>
-#include <demos/lv_demos.h>
-#include <examples/lv_examples.h>
+#include "ui.h"
+// #include <demos/lv_demos.h>
+// #include <examples/lv_examples.h>
 /**************************LVGL and UI END************************/
 
 /*******************************************************************************
@@ -146,7 +147,8 @@ void setup()
 
   lcd.fillScreen(TFT_BLACK);
 
-  lv_demo_widgets();    // LVGL demo
+  //lv_demo_widgets();    // LVGL demo
+  ui_init();
 
   Serial.println( "Setup done" );
 }

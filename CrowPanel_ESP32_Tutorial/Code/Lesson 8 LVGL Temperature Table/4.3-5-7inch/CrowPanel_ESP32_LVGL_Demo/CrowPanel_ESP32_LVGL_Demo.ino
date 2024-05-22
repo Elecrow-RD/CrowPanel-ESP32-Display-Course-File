@@ -20,8 +20,9 @@ if you want to use the LVGL demo. you need to include <demos/lv_demos.h> and <ex
 if not, please do not include it. It will waste your Flash space.
 **************************************************************/
 #include <lvgl.h>
-#include <demos/lv_demos.h>
-#include <examples/lv_examples.h>
+#include "ui.h"
+// #include <demos/lv_demos.h>
+// #include <examples/lv_examples.h>
 /**************************LVGL and UI END************************/
 
 /*******************************************************************************
@@ -29,11 +30,15 @@ if not, please do not include it. It will waste your Flash space.
  ******************************************************************************/
 #include "gfx_conf.h"
 
+#include <DHT20.h>
+DHT20  dht20(&Wire1);
+
 static lv_disp_draw_buf_t draw_buf;
 static lv_color_t disp_draw_buf1[screenWidth * screenHeight / 8];
 static lv_color_t disp_draw_buf2[screenWidth * screenHeight / 8];
 static lv_disp_drv_t disp_drv;
-
+float tem_float = 0;
+float hum_float = 0;
 
 /* Display flushing */
 void my_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p)
@@ -129,10 +134,59 @@ void setup()
 
   tft.fillScreen(TFT_BLACK);
 
-  lv_demo_widgets();    // LVGL demo
+  //please do not use LVGL Demo and UI export from Squareline Studio in the same time.
+  // lv_demo_widgets();    // LVGL demo
+  ui_init();
+
+  lv_timer_t * timer = lv_timer_create(my_timer, 2000,  NULL);
   
   Serial.println( "Setup done" );
 
+}
+
+void my_timer(lv_timer_t * timer)
+{
+    int status      = dht20.read();
+    char *tem       = (char *)malloc(24);
+    char *hum       = (char *)malloc(24);
+    switch (status)
+    {
+    case DHT20_OK:
+      Serial.print("OK,\t");
+      //Get ambient temperature
+      sprintf(tem, "Temperature: %.2f C ", tem_float = dht20.getTemperature());
+      //Serial.print(tem);
+      lv_label_set_text(ui_Label1, tem);
+      //Get relative humidity
+      sprintf(hum, "Humidity: %.2f %RH", hum_float = dht20.getHumidity());
+      //Serial.println(hum);
+      lv_label_set_text(ui_Label2, hum);
+      break;
+    case DHT20_ERROR_CHECKSUM:
+      Serial.print("Checksum error,\t");
+      break;
+    case DHT20_ERROR_CONNECT:
+      Serial.print("Connect error,\t");
+      break;
+    case DHT20_MISSING_BYTES:
+      Serial.print("Missing bytes,\t");
+      break;
+    case DHT20_ERROR_BYTES_ALL_ZERO:
+      Serial.print("All bytes read zero");
+      break;
+    case DHT20_ERROR_READ_TIMEOUT:
+      Serial.print("Read time out");
+      break;
+    case DHT20_ERROR_LASTREAD:
+      Serial.print("Error read too fast");
+      break;
+    default:
+      Serial.print("Unknown error,\t");
+      break;
+    }
+    lv_chart_set_next_value(ui_Chart1, ui_Chart1_series_1, tem_float);
+    lv_chart_set_next_value(ui_Chart1, ui_Chart1_series_2, hum_float);
+    lv_chart_refresh(ui_Chart1);
 }
 
 void loop()
