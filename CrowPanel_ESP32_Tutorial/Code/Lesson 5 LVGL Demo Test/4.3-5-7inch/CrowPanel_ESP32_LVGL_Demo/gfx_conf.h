@@ -66,7 +66,7 @@ public:
             cfg.pin_vsync = GPIO_NUM_40;
             cfg.pin_hsync = GPIO_NUM_39;
             cfg.pin_pclk = GPIO_NUM_0;
-            cfg.freq_write = 16000000;
+            cfg.freq_write = 14000000;
 
             cfg.hsync_polarity    = 0;
             cfg.hsync_front_porch = 40;
