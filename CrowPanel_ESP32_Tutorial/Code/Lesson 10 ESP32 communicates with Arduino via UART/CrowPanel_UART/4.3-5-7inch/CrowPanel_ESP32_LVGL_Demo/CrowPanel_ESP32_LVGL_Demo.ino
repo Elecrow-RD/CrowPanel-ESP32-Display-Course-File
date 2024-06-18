@@ -140,22 +140,22 @@ void loop()
     
     if(led_color == 1)
     {
-      Serial.println( "Red\n" );
+      Serial.println( "Red" );
       led_color == 0;
     }
     else if(led_color == 2)
     {
-      Serial.println( "Green\n" );
+      Serial.println( "Green" );
       led_color == 0;
     }
     else if(led_color == 3)
     {
-      Serial.println( "Blue\n" );
+      Serial.println( "Blue" );
       led_color == 0;
     }
     else
     {
-      Serial.println( "None\n" );
+      Serial.println( "None" );
       led_color == 0;
     }
 }
