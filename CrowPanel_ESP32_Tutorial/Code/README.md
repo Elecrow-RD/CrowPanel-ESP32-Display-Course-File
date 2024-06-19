@@ -1,15 +1,11 @@
-**Please refer to the board version label on the back of the board to determine the version of the board you are using**
+**<mark>Please refer to the board version label on the back of the board to determine the version of the board you are using</mark>**
 
 ![](https://github.com/Elecrow-RD/CrowPanel-ESP32-Display-Course-File/blob/main/CrowPanel_ESP32_Tutorial/Code/reame_image/rm1.png)
 
-
-
-确定了板子的版本后，请根据板子的版本使用对应的代码，1.X的代码和2.X的代码相同，可以任意替换，但在3.0版本中，5寸和7寸板的代码中额外增加了为触摸功能提供初始化时序的代码，如果你想了解更详细的内容，你可以观看该视频，里面会详细讲述各版本的板子的区别:
+After determining the version of the board, please use the corresponding code according to the version of the board, the code of 1.X is the same as that of 2.X, which can be replaced arbitrarily, but in version 3.0, the code of 5 inch and 7 inch board has added additional code to provide initialization timing for touch function, if you want to know more details, you can watch this video. It will detail the differences between the different versions of the board:
 
 
 
 ---
 
 update:2024/06/19
-
-
