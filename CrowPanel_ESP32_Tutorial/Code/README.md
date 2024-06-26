@@ -4,7 +4,7 @@
 
 After determining the version of the board, please use the corresponding code according to the version of the board, the code of 1.X is the same as that of 2.X, which can be replaced arbitrarily, but in version 3.0, the code of 5 inch and 7 inch board has added additional code to provide initialization timing for touch function, if you want to know more details, you can watch this video. It will detail the differences between the different versions of the board:
 
-
+[Get Started with ESP32: Comparing ESP32 Board Versions - Usage Differences - YouTube](https://www.youtube.com/watch?v=Y31AEXCWI4M)
 
 ---
 
