@@ -295,24 +295,24 @@ public:
 
         {
             auto touch_cfg = _touch_instance.config();
-            touch_cfg.x_min      = 100;    // タッチスクリーンから得られる最小のX値(生の値)
-            touch_cfg.x_max      = 4000;  // タッチスクリーンから得られる最大のX値(生の値)
-            touch_cfg.y_min      = 100;    // タッチスクリーンから得られる最小のY値(生の値)
-            touch_cfg.y_max      = 4000;  // タッチスクリーンから得られる最大のY値(生の値)
-            touch_cfg.pin_int    = 36;   // INTが接続されているピン番号
-            touch_cfg.bus_shared = true; // 画面と共通のバスを使用している場合 trueを設定
-            touch_cfg.offset_rotation = 0;// 表示とタッチの向きのが一致しない場合の調整 0~7の値で設定
+            touch_cfg.x_min      = 100;     // Minimum X value (raw value) obtained from touch screen
+            touch_cfg.x_max      = 4000;    // Maximum X value (raw value) available from touch screen
+            touch_cfg.y_min      = 100;     // Smallest Y value (raw value) obtained from the touch screen
+            touch_cfg.y_max      = 4000;    // Maximum Y value (raw value) available from touch screen
+            touch_cfg.pin_int    = 36;      // Pin number to which INT is connected
+            touch_cfg.bus_shared = true;    // Set to true if using a common bus with the screen
+            touch_cfg.offset_rotation = 0;  // Adjustment when the display and touch orientation do not match.
 
             // SPI接続の場合
-            touch_cfg.spi_host   = SPI2_HOST; //HSPI_HOST;// 使用するSPIを選択 (HSPI_HOST or VSPI_HOST)
-            touch_cfg.freq       = 1000000;     // SPIクロックを設定
-            touch_cfg.pin_sclk   = GPIO_NUM_12;     // SCLKが接続されているピン番号
-            touch_cfg.pin_mosi   = GPIO_NUM_11;     // MOSIが接続されているピン番号
-            touch_cfg.pin_miso   = GPIO_NUM_13;     // MISOが接続されているピン番号
-            touch_cfg.pin_cs     = GPIO_NUM_0;     //   CSが接続されているピン番号
+            touch_cfg.spi_host   = SPI2_HOST;       // Select SPI to use (HSPI_HOST or VSPI_HOST)
+            touch_cfg.freq       = 1000000;         // Set SPI clock
+            touch_cfg.pin_sclk   = GPIO_NUM_12;     // SCLK pin number
+            touch_cfg.pin_mosi   = GPIO_NUM_11;     // MOSI pin number
+            touch_cfg.pin_miso   = GPIO_NUM_13;     // MISO pin number
+            touch_cfg.pin_cs     = GPIO_NUM_0;      //  CS   pin number
 
             _touch_instance.config(touch_cfg);
-            _panel_instance.setTouch(&_touch_instance);  // タッチスクリーンをパネルにセットします。
+            _panel_instance.setTouch(&_touch_instance);  // Set the touchscreen on the panel
         }
         setPanel(&_panel_instance);
     }
