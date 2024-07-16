@@ -1,0 +1,250 @@
+esphome:
+  name: 43hmi
+  friendly_name: 4.3HMI
+  platformio_options:
+    build_flags: "-DBOARD_HAS_PSRAM"
+    board_build.esp-idf.memory_type: qio_opi
+    board_build.flash_mode: dio
+  #  board_upload.maximum_ram_size: 524288
+
+esp32:
+  board: adafruit_feather_esp32s3
+  framework:
+    type: esp-idf
+    #version: recommended
+    sdkconfig_options:
+      CONFIG_ESP32S3_DEFAULT_CPU_FREQ_240: y
+      CONFIG_ESP32S3_DATA_CACHE_64KB: y
+      CONFIG_SPIRAM_FETCH_INSTRUCTIONS: y
+      CONFIG_SPIRAM_RODATA: y
+
+    #sdkconfig_options: 
+      #COMPILER_OPTIMIZATTON_SIZE: y
+    #advanced:
+      #ignore_efuse_mac_crc: false
+    #type: arduino
+
+psram:
+  mode: quad
+  speed: 80MHz
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: "dAmVSpVn7C+nJHnqXVMgNPRj6m3gpA/8QglrqZKvdtE="
+
+ota:
+  password: "bbf9bc3114fd2f266468cd6cc19f8648"
+
+wifi:
+  ssid: "yanfa_software"
+  password: "yanfa-123456"
+  #log_level: DEBUG
+  #fast_connect: True 
+  #reconnect_timeout: 15s
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "4.3Hmi Fallback Hotspot"
+    password: "Et58dzZ8LLv6"
+
+captive_portal:
+    
+external_components:
+  - source:
+      type: git
+      url: https://github.com/clydebarrow/esphome
+      ref: fd15094c0860df23d532881df36cfd16c7da1091 #previous commit - wont be needed in the future
+    components: [ lvgl ]
+    
+output:
+  - platform: ledc
+    pin:
+      number: GPIO2
+    id: backlight_output
+
+light:
+  - platform: monochromatic
+    output: backlight_output
+    name: LCD Backlight
+    id: led
+    restore_mode: ALWAYS_ON
+    default_transition_length: 0s
+    
+display:
+  - platform: rpi_dpi_rgb
+    id: main_display
+    color_order: RGB
+    invert_colors: True
+    update_interval: never
+    auto_clear_enabled: false # takes 2.8 seconds to clear the display
+    dimensions:
+      width: 480
+      height: 272
+    de_pin: 40
+    hsync_pin: 39
+    vsync_pin: 41
+    pclk_pin: 42
+    pclk_frequency: 9MHz
+    hsync_pulse_width: 4
+    hsync_front_porch: 8
+    hsync_back_porch: 43
+    vsync_pulse_width: 4
+    vsync_front_porch: 8
+    vsync_back_porch: 12
+    data_pins:
+      red:
+        - 45        #r1
+        - 48        #r2
+        - 47        #r3
+        - 21        #r4
+        - 14        #r5
+      green:
+        - 5         #g0
+        - 6         #g1
+        - 7         #g2
+        - 15        #g3
+        - 16        #g4
+        - 4         #g5
+      blue:
+        - 8         #b1
+        - 3         #b2
+        - 46        #b3
+        - 9         #b4
+        - 1         #b5
+
+sensor:
+  - platform: rotary_encoder
+    name: "Rotary Encoder"
+    id: encoder
+    pin_a: 37
+    pin_b: 38
+    internal: true
+
+time:
+  - platform: homeassistant
+    id: time_comp
+
+binary_sensor:
+  - platform: gpio
+    id: pushbutton
+    name: Pushbutton
+    pin:
+      number: 18
+      inverted: true
+
+lvgl:
+  log_level: INFO
+  rotary_encoders:
+    sensor: encoder
+    binary_sensor: pushbutton
+    group: general
+  color_depth: 16
+  bg_color: 0x0F0F0F
+  text_font: unscii_8
+  align: center
+  style_definitions:
+    - id: date_style
+      text_font: unscii_8
+      align: center
+      text_color: 0x000000
+      bg_opa: cover
+      radius: 4
+      pad_all: 2
+  widgets:
+    - meter:
+        height: 240
+        width: 240
+        align: center
+        bg_color: 0
+        scales: # Color bars
+          angle_range: 360
+          rotation: 255
+          range_from: 0
+          range_to: 12
+          ticks:
+            width: 35
+            count: 13
+            length: 8
+          indicators:
+            - ticks:
+                local: true
+                start_value: 0
+                end_value: 12
+                color_start: 0xFF0000
+                color_end: 0x0000FF
+    - meter:
+        height: 240
+        width: 240
+        align: center
+        widgets:
+          - label:
+              styles: date_style
+              y: -20
+              text: !lambda |-
+                static const char * const day_names[] = {"SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"};
+                return day_names[id(time_comp).now().day_of_week-1];
+          - label:
+              styles: date_style
+              y: +20
+              text: !lambda |-
+                static const char * const mon_names[] = {"JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"};
+                static char date_buf[8];
+                auto now = id(time_comp).now();
+                snprintf(date_buf, sizeof(date_buf), "%s %2d", mon_names[now.month-1], now.day_of_month);
+                return date_buf;
+              
+        bg_opa: TRANSP
+        text_color: 0xFFFFFF
+        scales:
+          - ticks:
+              width: 1
+              count: 61
+              length: 10
+              color: 0xFFFFFF
+            range_from: 0
+            range_to: 60
+            angle_range: 360
+            rotation: 270
+            indicators:
+              - line:
+                  id: minute_hand
+                  value: !lambda |-
+                    return id(time_comp).now().minute;
+                  width: 3
+                  color: 0xE0E0E0
+                  r_mod: -1
+
+          - 
+            angle_range: 330
+            rotation: 300
+            range_from: 1
+            range_to: 12
+            ticks:
+              width: 1
+              count: 12
+              length: 1
+              major:
+                stride: 1
+                width: 4
+                length: 8
+                color: 0xC0C0C0
+                label_gap: 6
+
+          - angle_range: 360
+            rotation: 270
+            range_from: 0
+            range_to: 720
+            indicators:
+              - line:
+                  id: hour_hand
+                  value: !lambda |-
+                    auto now = id(time_comp).now();
+                    return std::fmod(now.hour, 12) * 60 + now.minute;
+                  width: 4
+                  color: 0xA0A0A0
+                  r_mod: -20

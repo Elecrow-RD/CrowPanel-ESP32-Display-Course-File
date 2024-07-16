@@ -1,0 +1,150 @@
+esphome:
+  name: 7inch
+  friendly_name: 7inch
+  platformio_options:
+    build_flags: "-DBOARD_HAS_PSRAM"
+    board_build.esp-idf.memory_type: qio_opi
+    board_build.flash_mode: dio
+  #  board_upload.maximum_ram_size: 524288
+
+esp32:
+  board: esp32-s3-devkitc-1
+  framework:
+    type: esp-idf
+    #version: recommended
+    sdkconfig_options:
+      CONFIG_ESP32S3_DEFAULT_CPU_FREQ_240: y
+      CONFIG_ESP32S3_DATA_CACHE_64KB: y
+      CONFIG_SPIRAM_FETCH_INSTRUCTIONS: y
+      CONFIG_SPIRAM_RODATA: y
+
+    #sdkconfig_options: 
+      #COMPILER_OPTIMIZATTON_SIZE: y
+    #advanced:
+      #ignore_efuse_mac_crc: false
+    #type: arduino
+
+psram:
+  mode: octal
+  speed: 80MHz
+  
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: "AIdWswWRR5YSvp7Itw7qPNe5WmkBqWoszqfjWgEuCNI="
+
+ota:
+  password: "9b5acd23acb1a3f49ed7891a61e6115f"
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "5Inch Fallback Hotspot"
+    password: "BYIM1Vq9TllW"
+
+captive_portal:
+
+font:
+  - file: 'arial.ttf'
+    id: font1
+    size: 10
+
+image:
+  - file: "lamp_panel.bmp"
+    id: lamppanel
+    resize: 800x480
+    type: RGB565
+
+switch:
+  - platform: gpio
+    name: "lamp"
+    id: led
+    pin: 38
+    inverted: no
+  - platform: gpio
+    name: "bck"
+    id: bglight
+    pin: 2
+    inverted: no
+    restore_mode: ALWAYS_ON
+  
+display:
+  - platform: rpi_dpi_rgb
+    id: main_display
+    color_order: RGB
+    invert_colors: True
+    update_interval: never
+    auto_clear_enabled: false # takes 2.8 seconds to clear the display
+    dimensions:
+      width: 800
+      height: 480
+    de_pin: 41
+    hsync_pin: 39
+    vsync_pin: 40
+    pclk_pin: 0
+    pclk_frequency: 18MHz
+    hsync_pulse_width: 48
+    hsync_front_porch: 40
+    hsync_back_porch: 40
+    vsync_pulse_width: 31
+    vsync_front_porch: 1
+    vsync_back_porch: 13
+    data_pins:
+      red:
+        - 14        #r1
+        - 21        #r2
+        - 47        #r3
+        - 48        #r4
+        - 45        #r5
+      green:
+        - 9         #g0
+        - 46         #g1
+        - 3         #g2
+        - 8        #g3
+        - 16        #g4
+        - 1         #g5
+      blue:
+        - 15         #b1
+        - 7         #b2
+        - 6        #b3
+        - 5         #b4
+        - 4         #b5
+    lambda: |-    
+        it.image(0, 0, id(lamppanel));
+
+
+
+i2c:
+  sda: 19
+  scl: 20
+  scan: true
+
+touchscreen:
+  platform: gt911
+  id: touch0
+  display: main_display
+  #interrupt_pin: 19
+  update_interval: 50ms
+  on_touch:
+    - logger.log:
+          format: Touch at (%d, %d)
+          args: [touch.x, touch.y]
+    - lambda: |-
+          ESP_LOGI("cal", "x=%d, y=%d, x_raw=%d, y_raw=%0d",
+              touch.x,
+              touch.y,
+              touch.x_raw,
+              touch.y_raw
+              );
+              if(((touch.x > 473) && (touch.x < 704)) && ((touch.y > 140) && (touch.y < 230))) {
+                id(led).turn_on();
+              }
+              if(((touch.x > 473) && (touch.x < 704)) && ((touch.y > 300) && (touch.y < 390))) {
+                id(led).turn_off();
+              }

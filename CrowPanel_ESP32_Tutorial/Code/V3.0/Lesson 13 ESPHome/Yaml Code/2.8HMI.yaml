@@ -1,0 +1,144 @@
+esphome:
+  name: 28inch
+  friendly_name: 2.8inch
+
+esp32:
+  board: denky32
+  framework:
+    type: arduino
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: "IzGh2RtkVXSvtUtC2etCocyw9vHj31JU5ouwY/fJ40g="
+
+ota:
+  password: "ea23f64118bcdbe3c988172daf9912ac"
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "28Inch Fallback Hotspot"
+    password: "s09TjILAQMVF"
+
+captive_portal:
+    
+font:
+  - file: 'arial.ttf'
+    id: font3
+    size: 22
+
+switch:
+  - platform: gpio
+    name: "led"
+    id: led24
+    pin: 25
+    inverted: no
+    #初始化为off
+    restore_mode: ALWAYS_OFF
+  - platform: gpio
+    name: "bck"
+    id: bck24
+    pin: 27
+    inverted: no
+    #初始化为off
+    restore_mode: ALWAYS_ON
+
+i2c:
+  sda: 22
+  scl: 21
+
+sensor:
+  - platform: aht10 #dht12 #am2320 #
+    temperature:
+      name: "HMI-24 Temperature"
+      id: temperature24
+    humidity:
+      name: "HMI-24 Humidity"
+      id: humidity24
+    update_interval: 10s
+
+spi:
+  clk_pin: 14
+  mosi_pin: 13
+  miso_pin: 12
+
+
+image:
+  - file: "menu.png"
+    id: menu
+    resize: 320x240
+    type: RGB24
+  - file: "ON_Light.png"
+    id: ON_Light
+    resize: 320x240
+    type: RGB24
+  - file: "OFF_Light.png"
+    id: OFF_Light
+    resize: 320x240
+    type: RGB24
+
+color:
+  - id: my_red
+    red: 100%
+    green: 0%
+    blue: 0%
+  - id: my_color
+    red: 100%
+    green: 100%
+    blue: 0%
+  - id: my_green
+    red: 0%
+    green: 100%
+    blue: 0%
+  - id: my_blue
+    red: 0%
+    green: 0%
+    blue: 100%
+
+touchscreen:
+  platform: xpt2046
+  id: my_touchscreen
+  cs_pin: 33
+  update_interval: 50ms
+  threshold: 400
+  calibration:
+    x_min: 3860
+    x_max: 280
+    y_min: 340
+    y_max: 3860
+  on_touch:
+    - lambda: |-
+          ESP_LOGI("cal", "x=%d, y=%d, x_raw=%d, y_raw=%0d",
+              touch.x,
+              touch.y,
+              touch.x_raw,
+              touch.y_raw
+              );
+          if((touch.x > 160) && (touch.y < 200)) {
+            id(led24).toggle();
+          }
+
+
+display:
+  - platform: ili9xxx
+    model: ili9341
+    dc_pin: 2
+    cs_pin: 15
+    rotation: 90
+    lambda: |-     
+      it.image(0, 0, id(menu));
+      it.printf(221, 63, id(font3), id(my_red), "%.1f", id(temperature24).state);
+      it.printf(221, 162, id(font3), id(my_blue), "%.1f", id(humidity24).state);
+      if (id(led24).state) {
+        it.image(0, 0, id(ON_Light));
+      } 
+      else {
+        it.image(0, 0, id(OFF_Light));
+      }

@@ -1,0 +1,169 @@
+esphome:
+  name: 35hmi
+  friendly_name: 3.5HMI
+
+esp32:
+  board: odroid_esp32
+  framework:
+    type: arduino
+    
+
+# Enable logging
+logger:
+  level: VERBOSE
+  logs: 
+    light.components: ERROR
+    light.output: ERROR
+    number.component: ERROR
+    ledc.output: ERROR
+    template.number: ERROR
+  baud_rate: 0
+# Enable Home Assistant API
+api:
+  encryption:
+    key: "opyG36e78+nmZgUuENBpkJl60gkkHe9/alpljO+DxbM="
+
+ota:
+  password: "47476edb080c0ed7d13008b70660dcf0"
+
+wifi:
+  ssid: "yanfa_software"
+  password: "yanfa-123456"
+  #log_level: DEBUG
+  #fast_connect: True 
+  #reconnect_timeout: 15s
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "35Hmi Fallback Hotspot"
+    password: "6KsyZPRel0ab"
+
+captive_portal:
+
+external_components:
+  - source:
+      type: git
+      url: https://github.com/clydebarrow/esphome
+      ref: fd15094c0860df23d532881df36cfd16c7da1091 #previous commit - wont be needed in the future
+    components: [ lvgl ]
+
+spi:
+  clk_pin: GPIO14
+  mosi_pin: GPIO13
+  interface: hardware
+  id: spiwd
+
+# Define a PWM output on the ESP32
+output:
+  - platform: ledc
+    pin: GPIO27
+    inverted: False
+    id: backlight_pwm
+
+# Define a monochromatic, dimmable light for the backlight
+light:
+  - platform: monochromatic
+    output: backlight_pwm
+    name: "Display Backlight"
+    id: back_light
+    restore_mode: ALWAYS_ON
+
+color:
+  - id: my_red
+    red: 100%
+    green: 0%
+    blue: 0%
+  - id: my_orange
+    red: 100%
+    green: 50%
+    blue: 0%
+  - id: my_yellow
+    red: 100%
+    green: 100%
+    blue: 0%
+  - id: my_green
+    red: 0%
+    green: 100%
+    blue: 0%
+  - id: my_blue
+    red: 0%
+    green: 0%
+    blue: 100%
+  - id: my_teal
+    red: 0%
+    green: 100%
+    blue: 100%
+  - id: my_gray
+    red: 70%
+    green: 70%
+    blue: 70%
+  - id: my_white
+    red: 100%
+    green: 100%
+    blue: 100%
+  - id: my_black
+    red: 0%
+    green: 0%
+    blue: 0%
+
+font:
+  - file: "gfonts://Roboto"
+    id: font_48
+    size: 48
+  - file: "gfonts://Roboto"
+    id: font_36
+    size: 36
+  - file: "gfonts://Roboto"
+    id: font_24
+    size: 24
+  - file: "gfonts://Roboto"
+    id: font_12
+    size: 12
+
+display:
+  - platform: ili9xxx
+    id: lcd_display
+    model: ILI9488
+    spi_id: spiwd
+    data_rate: 20MHz
+    cs_pin: GPIO15
+    dc_pin: GPIO2
+    spi_mode: mode0   #since no cs pin default is mode0
+    dimensions: 
+      height: 480
+      width: 320
+    invert_colors: False
+    lambda: |-
+      it.rectangle(0,  0, it.get_width(), it.get_height(), id(my_blue));
+      it.rectangle(0, 20, it.get_width(), it.get_height(), id(my_blue));   // header bar
+      
+      //it.print(5, 5, id(font_12), id(my_yellow), TextAlign::TOP_LEFT, "ESPHome");
+      it.strftime(5, 5, id(font_12), id(my_yellow), TextAlign::TOP_LEFT, "%H:%M:%S", id(time_comp).now());
+      
+      it.print((it.get_width() / 2), (240 / 6.5) * 1 - 8, id(font_12), id(my_yellow), TextAlign::CENTER, "Testing");
+      it.printf((it.get_width() / 2), (240 / 6.5) * 1 + 9, id(font_24), id(my_yellow), TextAlign::CENTER, "%.2fC", 0.000);
+      it.line(0, (240 / 6.5) * 1 + 18, it.get_width(), (240 / 6.5) * 1 + 18, id(my_blue));
+    
+      it.print((it.get_width() / 2), (240 / 6.5) * 2 - 8, id(font_12), id(my_green), TextAlign::CENTER, "Testing 1");
+      it.printf((it.get_width() / 2), (240 / 6.5) * 2 + 9, id(font_24), id(my_green), TextAlign::CENTER, "%.2fC", "1.111");
+      it.line(0, (240 / 6.5) * 2 + 18, it.get_width(), (240 / 6.5) * 2 + 18, id(my_blue));
+      
+      it.print((it.get_width() / 2), (240 / 6.5) * 3 - 8, id(font_12), id(my_orange), TextAlign::CENTER, "Testing 2");
+      it.printf((it.get_width() / 2), (240 / 6.5) * 3 + 9, id(font_24), id(my_orange), TextAlign::CENTER, "%.2fC", 2.222);
+      it.line(0, (240 / 6.5) * 3 + 18, it.get_width(), (240 / 6.5) * 3 + 18, id(my_blue));
+      
+      it.print((it.get_width() / 2), (240 / 6.5) * 4 - 8, id(font_12), id(my_gray), TextAlign::CENTER, "Testing 3");
+      it.printf((it.get_width() / 2), (240 / 6.5) * 4 + 9, id(font_24), id(my_gray), TextAlign::CENTER, "%.2fC", "3.333");
+      it.line(0, (240 / 6.5) * 4 + 18, it.get_width(), (240 / 6.5) * 4 + 18, id(my_blue));
+      
+      it.print((it.get_width() / 2), (240 / 6.5) * 5 - 8, id(font_12), id(my_teal), TextAlign::CENTER, "Testing 4");
+      it.printf((it.get_width() / 2), (240 / 6.5) * 5 + 9, id(font_24), id(my_teal), TextAlign::CENTER, "%.2fC", 4.444);
+      it.line(0, (240 / 6.5) * 5 + 18, it.get_width(), (240 / 6.5) * 5 + 18, id(my_blue));
+      
+      it.print((it.get_width() / 2), (240 / 6.5) * 6 - 8, id(font_12), id(my_red), TextAlign::CENTER, "Testing 5");
+      it.printf((it.get_width() / 2), (240 / 6.5) * 6 + 9, id(font_24), id(my_red), TextAlign::CENTER, "%.2fC", 5.555);
+
+time:
+  - platform: sntp
+    id: time_comp
+
