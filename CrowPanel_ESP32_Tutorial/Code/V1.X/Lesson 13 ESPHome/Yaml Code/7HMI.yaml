@@ -1,43 +1,38 @@
+#this code only suitable for V3.2 board
 esphome:
-  name: 7inch
-  friendly_name: 7inch
+  name: 7hmi-yili
+  friendly_name: 7HMI_yili
   platformio_options:
     build_flags: "-DBOARD_HAS_PSRAM"
     board_build.esp-idf.memory_type: qio_opi
     board_build.flash_mode: dio
-  #  board_upload.maximum_ram_size: 524288
+    #board_upload.maximum_ram_size: 524288
 
 esp32:
   board: esp32-s3-devkitc-1
   framework:
     type: esp-idf
-    #version: recommended
+# Required to achieve sufficient PSRAM bandwidth
     sdkconfig_options:
       CONFIG_ESP32S3_DEFAULT_CPU_FREQ_240: y
       CONFIG_ESP32S3_DATA_CACHE_64KB: y
       CONFIG_SPIRAM_FETCH_INSTRUCTIONS: y
       CONFIG_SPIRAM_RODATA: y
 
-    #sdkconfig_options: 
-      #COMPILER_OPTIMIZATTON_SIZE: y
-    #advanced:
-      #ignore_efuse_mac_crc: false
-    #type: arduino
-
 psram:
   mode: octal
-  speed: 80MHz
-  
+  speed: 80MHz 
+
 # Enable logging
 logger:
 
 # Enable Home Assistant API
 api:
   encryption:
-    key: "AIdWswWRR5YSvp7Itw7qPNe5WmkBqWoszqfjWgEuCNI="
+    key: "vaapvBzPVVVEjcHp6+HZ2MXafXR8TTXL/ZYXMGasKrY="
 
 ota:
-  password: "9b5acd23acb1a3f49ed7891a61e6115f"
+  password: "62e74181526671aae43599cd572aff67"
 
 wifi:
   ssid: !secret wifi_ssid
@@ -45,35 +40,49 @@ wifi:
 
   # Enable fallback hotspot (captive portal) in case wifi connection fails
   ap:
-    ssid: "5Inch Fallback Hotspot"
-    password: "BYIM1Vq9TllW"
+    ssid: "7Hmi-Yili Fallback Hotspot"
+    password: "McinMjyFZj3Z"
 
 captive_portal:
 
-font:
-  - file: 'arial.ttf'
-    id: font1
-    size: 10
-
-image:
-  - file: "lamp_panel.bmp"
-    id: lamppanel
-    resize: 800x480
-    type: RGB565
-
-switch:
-  - platform: gpio
-    name: "lamp"
-    id: led
-    pin: 38
-    inverted: no
-  - platform: gpio
-    name: "bck"
-    id: bglight
+external_components:
+  - source:
+      type: git
+      url: https://github.com/clydebarrow/esphome
+      ref: fd15094c0860df23d532881df36cfd16c7da1091 #previous commit - wont be needed in the future
+    components: [ lvgl ]
+    
+# Define a PWM output on the ESP32
+output:
+  - platform: ledc
     pin: 2
-    inverted: no
+    frequency: 1220
+    id: gpio_backlight_pwm
+
+light:
+  - platform: monochromatic # Define a monochromatic, dimmable light for the backlight
+    output: gpio_backlight_pwm
+    name: ${devicename} Display Backlight
+    id: back_light
     restore_mode: ALWAYS_ON
-  
+
+binary_sensor:
+  - platform: status
+    name: "Node Status"
+    id: system_status
+
+text_sensor:
+  - platform: template
+    # name: Uptime Human Readable
+    id: uptime_human
+    icon: mdi:clock-start
+    internal: True
+
+  - platform: wifi_info
+    ip_address:
+      # name: ESP IP Address
+      id: ip_address
+    
 display:
   - platform: rpi_dpi_rgb
     id: main_display
@@ -88,13 +97,7 @@ display:
     hsync_pin: 39
     vsync_pin: 40
     pclk_pin: 0
-    pclk_frequency: 18MHz
-    hsync_pulse_width: 48
-    hsync_front_porch: 40
-    hsync_back_porch: 40
-    vsync_pulse_width: 31
-    vsync_front_porch: 1
-    vsync_back_porch: 13
+    pclk_frequency: 12MHz
     data_pins:
       red:
         - 14        #r1
@@ -115,36 +118,520 @@ display:
         - 6        #b3
         - 5         #b4
         - 4         #b5
-    lambda: |-    
-        it.image(0, 0, id(lamppanel));
 
 
+time:
+  - platform: sntp
+    id: time_comp
 
-i2c:
-  sda: 19
-  scl: 20
-  scan: true
+number:
+  - platform: template
+    initial_value: 0
+    id: counting_number
+    internal: True
+    min_value: -10
+    max_value: 10
+    step: 1
+    optimistic: True
 
-touchscreen:
-  platform: gt911
-  id: touch0
-  display: main_display
-  #interrupt_pin: 19
-  update_interval: 50ms
-  on_touch:
-    - logger.log:
-          format: Touch at (%d, %d)
-          args: [touch.x, touch.y]
-    - lambda: |-
-          ESP_LOGI("cal", "x=%d, y=%d, x_raw=%d, y_raw=%0d",
-              touch.x,
-              touch.y,
-              touch.x_raw,
-              touch.y_raw
-              );
-              if(((touch.x > 473) && (touch.x < 704)) && ((touch.y > 140) && (touch.y < 230))) {
-                id(led).turn_on();
-              }
-              if(((touch.x > 473) && (touch.x < 704)) && ((touch.y > 300) && (touch.y < 390))) {
-                id(led).turn_off();
-              }
+debug:
+  update_interval: 5s
+
+sensor:
+  - platform: wifi_signal
+    # name: "WiFi Signal Sensor"
+    internal: True
+    id: wifi_signal_sensor
+    update_interval: 1s
+  - platform: uptime
+    id: uptime_counter
+    update_interval: 1s
+    accuracy_decimals: 0
+    on_raw_value:
+      then:
+        - light.turn_on:
+            id: back_light
+            brightness: 90%
+        - number.increment:
+            id: counting_number
+            cycle: True
+        - script.execute: update_display
+  - platform: debug
+    free:
+      name: "Heap Free"
+    block:
+      name: "Heap Max Block"
+    loop_time:
+      name: "Loop Time"
+    psram:
+      name: "Free PSRAM"
+  - platform: uptime
+    # name: Uptime Sensor
+    internal: True
+    id: uptime_sensor
+    update_interval: 1s
+    on_raw_value:
+      then:
+        - text_sensor.template.publish:
+            id: uptime_human
+            state: !lambda |-
+              int seconds = round(id(uptime_sensor).raw_state);
+              int days = seconds / (24 * 3600);
+              seconds = seconds % (24 * 3600);
+              int hours = seconds / 3600;
+              seconds = seconds % 3600;
+              int minutes = seconds /  60;
+              seconds = seconds % 60;
+              return (
+                ("Uptime ") +
+                (days ? to_string(days) + "d " : "") +
+                (hours ? to_string(hours) + "h " : "") +
+                (minutes ? to_string(minutes) + "m " : "") +
+                (to_string(seconds) + "s")
+              ).c_str();
+
+  - platform: homeassistant
+    name: "Processor Use"
+    entity_id: sensor.processor_use
+    id: ha_processor_use    
+
+script:
+  - id: update_display
+    then:
+      - lvgl.indicator.line.update:
+          id: power_meter_input
+          value: !lambda return id(counting_number).state;
+      - lvgl.label.update:
+          id: battery_kw
+          text: !lambda |-
+            static char buf[8];
+            snprintf(buf, sizeof(buf), "%.1fkW", id(counting_number).state);
+            return buf;
+      - lvgl.label.update:
+          id: battery_status
+          text_color: 0xFF0000
+          #text: "charging"
+          text: "discharging"
+      - lvgl.label.update:
+          id: battery_soc
+          text: !lambda |-
+            static char buf[8];
+            snprintf(buf, sizeof(buf), "%.1f%%", id(counting_number).state);
+            return buf;
+      - lvgl.label.update:
+          id: solar_kw
+          text: !lambda |-
+            static char buf[8];
+            snprintf(buf, sizeof(buf), "%.1fkW", id(counting_number).state);
+            return buf;
+      - lvgl.img.update:
+          id: img_solar_power
+          src: solar_power_icon
+          img_recolor: 0xFFF000 #mixes this color with the base image
+          #img_recolor_opa: 100% #opacity defaults to 0% = must set this for recolor to take effect
+          #bg_color: 0xFFFFFF          
+      - lvgl.indicator.line.update:
+          id: power_meter_input2
+          value: !lambda return id(counting_number).state;
+      - lvgl.label.update:
+          id: battery_kw2
+          text: !lambda |-
+            static char buf[8];
+            snprintf(buf, sizeof(buf), "%.1fkW", id(counting_number).state);
+            return buf;
+      - lvgl.label.update:
+          id: battery_status2
+          text_color: 0xFF0000
+          #text: "charging"
+          text: "discharging"
+      - lvgl.label.update:
+          id: battery_soc2
+          text: !lambda |-
+            static char buf[8];
+            snprintf(buf, sizeof(buf), "%.1f%%", id(counting_number).state);
+            return buf;
+      - lvgl.label.update:
+          id: solar_kw2
+          text: !lambda |-
+            static char buf[8];
+            snprintf(buf, sizeof(buf), "%.1fkW", id(counting_number).state);
+            return buf;
+      - lvgl.img.update:
+          id: img_solar_power2
+          src: solar_power_icon
+          img_recolor: 0xFFF000 #mixes this color with the base image
+          #img_recolor_opa: 100% #opacity defaults to 0% = must set this for recolor to take effect
+          #bg_color: 0xFFFFFF   
+
+image:
+  - file: mdi:sun-wireless-outline
+    #"solar-power-invert.png"
+    # mdi:solar-power
+    # mdi:battery-charging-outline
+    # mdi:battery-arrow-up-outline
+    # mdi:battery-arrow-down-outline
+    id: solar_power_icon
+    resize: 50x50
+
+  - file: mdi:battery-arrow-down-outline
+    id: home_battery_icon
+    resize: 30x30
+
+lvgl:
+  log_level: INFO
+  color_depth: 16
+  #buffer_size: 25%
+  bg_color: 0
+  border_width: 0
+  outline_width: 0
+  shadow_width: 0
+  text_font: unscii_16
+  align: center
+  style_definitions:
+    - id: meter_style
+      text_font: unscii_8
+      #state_default: null
+    - id: font_style
+      text_font: MONTSERRAT_24
+      #text_font: unscii_16
+      align: center
+      text_color: 0xFFFFFF
+      #bg_opa: cover
+      bg_opa: TRANSP
+      bg_color: 0
+      radius: 4
+      pad_all: 2 
+    - id: details_style
+      text_font: MONTSERRAT_18
+      align: center
+      text_color: 0xFFFFFF
+      #bg_opa: cover
+      bg_opa: TRANSP
+      bg_color: 0
+      radius: 4
+      pad_all: 2 
+  widgets:
+    - obj: # Meter
+        height: 240
+        width: 240
+        #bg_opa: TRANSP
+        bg_color: 0
+        border_width: 0
+        outline_width: 0
+        shadow_width: 0
+        pad_all: 4
+        align: TOP_LEFT
+        #scrollbar_mode: "off"
+        widgets:
+          - meter: # Gradient color  arc
+              height: 100%
+              width: 100%
+              border_width: 0
+              outline_width: 0
+              align: center
+              bg_color: 0
+              styles: meter_style
+              #bg_opa: TRANSP
+              scales:
+                angle_range: 180 # sets the total angle to 180 = starts mid left and ends mid right
+                range_to: 10
+                range_from: -10
+                ticks:
+                  count: 0
+                indicators:
+                  - line:
+                      id: power_meter_input
+                      width: 8
+                      color: 0xFFFFFF
+                      r_mod: 12 #sets line length by this much difference from the scale default radius
+                      value: 50
+                  - img:
+                      id: power_meter_input_img
+                  - arc:
+                      color: 0xFF3000
+                      r_mod: 10 #radius difference from the scale default radius
+                      width: 20
+                      start_value: -10
+                      end_value: 0
+                  - arc:
+                      color: 0x00FF00
+                      r_mod: 10 #radius difference from the scale default radius
+                      width: 20
+                      start_value: 0
+                      end_value: 10
+          #- canvas:
+          - arc: # black arc to erase middle part of meter indicator line
+              height: 160
+              width: 160
+              align: center
+              arc_color: 0x000000 # background color
+              arc_width: 150
+              start_angle: 0
+              end_angle: 360
+              indicator:
+                arc_width: 150
+                arc_color: 0x000000
+          - label: # gauge lower and higher range indicators
+              styles: font_style
+              text_font: MONTSERRAT_18 # override font size
+              y: 8 #negative = higher
+              x: -99
+              text: "-10"
+          - label:
+              styles: font_style
+              text_font: MONTSERRAT_18 # override font size
+              y: 8 #negative = higher
+              x: 99
+              text: "+10"
+          - label:
+              styles: font_style
+              id: battery_status
+              y: -35 #negative = higher
+          - label:
+              styles: font_style
+              id: battery_kw
+              y: -60
+          - label:
+              styles: font_style
+              text_font: MONTSERRAT_40 # override font size
+              id: battery_soc
+              y: 0
+          - label:
+              styles: font_style
+              id: solar_kw
+              text_color: 0xFFFF00
+              y: 90
+          #- img:
+          #    src: home_battery_icon
+              #id: img_solar_power
+              #align: center
+              #img_recolor: 0xFFFFFF
+              #img_recolor_opa: 100% #opacity defaults to 0% = must set this for recolor to take effect
+              #bg_color: 0xFFFFFF
+              #y: -35
+              #x: -60
+          - img:
+              src: solar_power_icon
+              id: img_solar_power
+              align: center
+              img_recolor: 0xFFFF00
+              img_recolor_opa: 100% #opacity defaults to 0% = must set this for recolor to take effect
+              #bg_color: 0xFFFFFF
+              y: 50
+              #x: -60
+    - obj: # Meter
+        height: 240
+        width: 240
+        #bg_opa: TRANSP
+        bg_color: 0
+        border_width: 0
+        outline_width: 0
+        shadow_width: 0
+        pad_all: 4
+        align: TOP_MID
+        #scrollbar_mode: "off"
+        widgets:
+          - meter: # Gradient color  arc
+              height: 100%
+              width: 100%
+              border_width: 0
+              outline_width: 0
+              align: center
+              bg_color: 0
+              styles: meter_style
+              #bg_opa: TRANSP
+              scales:
+                angle_range: 180 # sets the total angle to 180 = starts mid left and ends mid right
+                range_to: 10
+                range_from: -10
+                ticks:
+                  count: 0
+                indicators:
+                  - line:
+                      id: power_meter_input2
+                      width: 8
+                      color: 0xFFFFFF
+                      r_mod: 12 #sets line length by this much difference from the scale default radius
+                      value: 50
+                  - img:
+                      id: power_meter_input_img2
+                  - arc:
+                      color: 0xFF3000
+                      r_mod: 10 #radius difference from the scale default radius
+                      width: 20
+                      start_value: -10
+                      end_value: 0
+                  - arc:
+                      color: 0x00FF00
+                      r_mod: 10 #radius difference from the scale default radius
+                      width: 20
+                      start_value: 0
+                      end_value: 10
+          #- canvas:
+          - arc: # black arc to erase middle part of meter indicator line
+              height: 160
+              width: 160
+              align: center
+              arc_color: 0x000000 # background color
+              arc_width: 150
+              start_angle: 0
+              end_angle: 360
+              indicator:
+                arc_width: 150
+                arc_color: 0x000000
+          - label: # gauge lower and higher range indicators
+              styles: font_style
+              text_font: MONTSERRAT_18 # override font size
+              y: 8 #negative = higher
+              x: -99
+              text: "-10"
+          - label:
+              styles: font_style
+              text_font: MONTSERRAT_18 # override font size
+              y: 8 #negative = higher
+              x: 99
+              text: "+10"
+          - label:
+              styles: font_style
+              id: battery_status2
+              y: -35 #negative = higher
+          - label:
+              styles: font_style
+              id: battery_kw2
+              y: -60
+          - label:
+              styles: font_style
+              text_font: MONTSERRAT_40 # override font size
+              id: battery_soc2
+              y: 0
+          - label:
+              styles: font_style
+              id: solar_kw2
+              text_color: 0xFFFF00
+              y: 90
+          #- img:
+          #    src: home_battery_icon
+              #id: img_solar_power
+              #align: center
+              #img_recolor: 0xFFFFFF
+              #img_recolor_opa: 100% #opacity defaults to 0% = must set this for recolor to take effect
+              #bg_color: 0xFFFFFF
+              #y: -35
+              #x: -60
+          - img:
+              src: solar_power_icon
+              id: img_solar_power2
+              align: center
+              img_recolor: 0xFFFF00
+              img_recolor_opa: 100% #opacity defaults to 0% = must set this for recolor to take effect
+              #bg_color: 0xFFFFFF
+              y: 50
+              #x: -60
+    - obj: # Meter
+        height: 240
+        width: 240
+        #bg_opa: TRANSP
+        bg_color: 0
+        border_width: 0
+        outline_width: 0
+        shadow_width: 0
+        pad_all: 4
+        align: BOTTOM_LEFT
+        #scrollbar_mode: "off"
+        widgets:
+          - meter: # Gradient color  arc
+              height: 100%
+              width: 100%
+              border_width: 0
+              outline_width: 0
+              align: center
+              bg_color: 0
+              styles: meter_style
+              #bg_opa: TRANSP
+              scales:
+                angle_range: 180 # sets the total angle to 180 = starts mid left and ends mid right
+                range_to: 10
+                range_from: -10
+                ticks:
+                  count: 0
+                indicators:
+                  - line:
+                      id: power_meter_input3
+                      width: 8
+                      color: 0xFFFFFF
+                      r_mod: 12 #sets line length by this much difference from the scale default radius
+                      value: 50
+                  - img:
+                      id: power_meter_input_img3
+                  - arc:
+                      color: 0xFF3000
+                      r_mod: 10 #radius difference from the scale default radius
+                      width: 20
+                      start_value: -10
+                      end_value: 0
+                  - arc:
+                      color: 0x00FF00
+                      r_mod: 10 #radius difference from the scale default radius
+                      width: 20
+                      start_value: 0
+                      end_value: 10
+          #- canvas:
+          - arc: # black arc to erase middle part of meter indicator line
+              height: 160
+              width: 160
+              align: center
+              arc_color: 0x000000 # background color
+              arc_width: 150
+              start_angle: 0
+              end_angle: 360
+              indicator:
+                arc_width: 150
+                arc_color: 0x000000
+          - label: # gauge lower and higher range indicators
+              styles: font_style
+              text_font: MONTSERRAT_18 # override font size
+              y: 8 #negative = higher
+              x: -99
+              text: "-10"
+          - label:
+              styles: font_style
+              text_font: MONTSERRAT_18 # override font size
+              y: 8 #negative = higher
+              x: 99
+              text: "+10"
+          - label:
+              styles: font_style
+              id: battery_status3
+              y: -35 #negative = higher
+          - label:
+              styles: font_style
+              id: battery_kw3
+              y: -60
+          - label:
+              styles: font_style
+              text_font: MONTSERRAT_40 # override font size
+              id: battery_soc3
+              y: 0
+          - label:
+              styles: font_style
+              id: solar_kw3
+              text_color: 0xFFFF00
+              y: 90
+          #- img:
+          #    src: home_battery_icon
+              #id: img_solar_power
+              #align: center
+              #img_recolor: 0xFFFFFF
+              #img_recolor_opa: 100% #opacity defaults to 0% = must set this for recolor to take effect
+              #bg_color: 0xFFFFFF
+              #y: -35
+              #x: -60
+          - img:
+              src: solar_power_icon
+              id: img_solar_power3
+              align: center
+              img_recolor: 0xFFFF00
+              img_recolor_opa: 100% #opacity defaults to 0% = must set this for recolor to take effect
+              #bg_color: 0xFFFFFF
+              y: 50
+              #x: -60
