@@ -66,7 +66,7 @@ public:
             cfg.pin_vsync = GPIO_NUM_40;
             cfg.pin_hsync = GPIO_NUM_39;
             cfg.pin_pclk = GPIO_NUM_0;
-            cfg.freq_write = 14000000;
+            cfg.freq_write = 12000000;
 
             cfg.hsync_polarity    = 0;
             cfg.hsync_front_porch = 40;
@@ -106,7 +106,7 @@ public:
             cfg.i2c_port   = I2C_NUM_1;
             cfg.pin_sda    = GPIO_NUM_19;
             cfg.pin_scl    = GPIO_NUM_20;
-            cfg.freq       = 18000000;
+            cfg.freq       = 400000;
             cfg.i2c_addr   = 0x14;
             _touch_instance.config(cfg);
             _panel_instance.setTouch(&_touch_instance);
@@ -166,7 +166,7 @@ public:
             cfg.pin_vsync = GPIO_NUM_41;
             cfg.pin_hsync = GPIO_NUM_39;
             cfg.pin_pclk = GPIO_NUM_0;
-            cfg.freq_write = 15000000;
+            cfg.freq_write = 12000000;
 
             cfg.hsync_polarity    = 0;
             cfg.hsync_front_porch = 8;
@@ -320,4 +320,4 @@ public:
 #endif
 
 LGFX tft;
-LGFX_Sprite sprite(&tft);
+

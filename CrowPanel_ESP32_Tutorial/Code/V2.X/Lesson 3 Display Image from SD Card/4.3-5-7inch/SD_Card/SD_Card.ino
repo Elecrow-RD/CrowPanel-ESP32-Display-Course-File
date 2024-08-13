@@ -1,5 +1,5 @@
 /**************************CrowPanel ESP32 HMI Display Example Code************************
-Version		 :	1.0
+Version		 :	1.1
 Suitable for :	CrowPanel ESP32 HMI Display
 Product link :	https://www.elecrow.com/esp32-display-series-hmi-touch-screen.html
 Code	link :	https://github.com/Elecrow-RD/CrowPanel-ESP32-Display-Course-File

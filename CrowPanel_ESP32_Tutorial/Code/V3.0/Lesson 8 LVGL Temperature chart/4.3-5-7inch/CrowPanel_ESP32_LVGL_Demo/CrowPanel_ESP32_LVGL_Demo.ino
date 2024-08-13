@@ -1,5 +1,5 @@
 /**************************CrowPanel ESP32 HMI Display Example Code************************
-Version     :	1.0
+Version     :	1.1
 Suitable for:	CrowPanel ESP32 HMI Display
 Product link:	https://www.elecrow.com/esp32-display-series-hmi-touch-screen.html
 Code	  link:	https://github.com/Elecrow-RD/CrowPanel-ESP32-Display-Course-File
@@ -33,8 +33,8 @@ if not, please do not include it. It will waste your Flash space.
 DHT20  dht20(&Wire1);
 
 static lv_disp_draw_buf_t draw_buf;
-static lv_color_t disp_draw_buf1[screenWidth * screenHeight / 8];
-static lv_color_t disp_draw_buf2[screenWidth * screenHeight / 8];
+static lv_color_t disp_draw_buf1[screenWidth * screenHeight / 10];
+static lv_color_t disp_draw_buf2[screenWidth * screenHeight / 10];
 static lv_disp_drv_t disp_drv;
 float tem_float = 0;
 float hum_float = 0;
@@ -127,7 +127,7 @@ void setup()
 
   delay(100);
 
-  lv_disp_draw_buf_init(&draw_buf, disp_draw_buf1, disp_draw_buf2, screenWidth * screenHeight/8);
+  lv_disp_draw_buf_init(&draw_buf, disp_draw_buf1, disp_draw_buf2, screenWidth * screenHeight/10);
   /* Initialize the display */
   lv_disp_drv_init(&disp_drv);
   /* Change the following line to your display resolution */

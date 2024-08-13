@@ -10,8 +10,8 @@
  * CrowPanel_50 means CrowPanel 5.0inch Board
  * CrowPanel_70 means CrowPanel 7.0inch Board
  ******************************************************************************/
- #define CrowPanel_70
-// #define CrowPanel_50
+// #define CrowPanel_70
+ #define CrowPanel_50
 // #define CrowPanel_43
 
 
@@ -66,7 +66,7 @@ public:
             cfg.pin_vsync = GPIO_NUM_40;
             cfg.pin_hsync = GPIO_NUM_39;
             cfg.pin_pclk = GPIO_NUM_0;
-            cfg.freq_write = 14000000;
+            cfg.freq_write = 12000000;
 
             cfg.hsync_polarity    = 0;
             cfg.hsync_front_porch = 40;
@@ -166,7 +166,7 @@ public:
             cfg.pin_vsync = GPIO_NUM_41;
             cfg.pin_hsync = GPIO_NUM_39;
             cfg.pin_pclk = GPIO_NUM_0;
-            cfg.freq_write = 15000000;
+            cfg.freq_write = 12000000;
 
             cfg.hsync_polarity    = 0;
             cfg.hsync_front_porch = 8;
