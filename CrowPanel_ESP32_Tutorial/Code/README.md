@@ -18,7 +18,7 @@ This is the library used to initialize the screen for touch in version 3.X of th
 
 If you want to know more details, you can watch this video. It will detail the differences between the different versions of the board:
 
-[Get Started with ESP32: Comparing ESP32 Board Versions - Usage Differences - YouTube](https://www.youtube.com/watch?v=Y31AEXCWI4M)
+[Get Started with ESP32: Comparing ESP32 Board Versions - Usage Differences - YouTube](https://www.youtube.com/watch?v=RlRH0gwcbI8)
 
 ---
 
