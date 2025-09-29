@@ -1,10 +1,16 @@
 ## Arduino platform requirements for ESP32 version and library version
 Board Version
+
 esp32 by Espressif System 2.0.14/2.0.15
+
 Lib Related Versions
+
 Ivgl: 8.3.3
+
 TFT_eSPI: 2.5.0
+
 LovyanGFX: 1.1.8
+
 The libs are provided directly by our wiki, just use the libs provided by the wiki.
 
 2.4 inch:https://www.elecrow.com/wiki/esp32-display-242727-intelligent-touch-screen-wi-fi26ble-240320-hmi-display.html
